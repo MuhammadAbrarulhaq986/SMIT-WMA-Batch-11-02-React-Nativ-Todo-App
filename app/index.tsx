@@ -14,121 +14,119 @@ import React, { useState } from "react";
 
 const Home = () => {
   const [input, setInput] = useState("");
-  const [todo, setTodo] = useState<string[]>(["hello world"]);
+  const [todo, setTodo] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [updateInput, setUpdateInput] = useState("");
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState<number | null>(null);
 
-  // addtodo
   const addTodo = () => {
-    console.log(input);
-    todo.push(input);
-    setTodo([...todo]);
-    setInput("");
+    if (input.trim()) {
+      setTodo([...todo, input]);
+      setInput("");
+    } else {
+      Alert.alert("Please enter a valid todo.");
+    }
   };
 
-  // deleteTodo
   const deleteTodo = (index: number) => {
-    console.log("todo deleted", index);
-    todo.splice(index, 1);
-    setTodo([...todo]);
+    Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        onPress: () => {
+          const newTodos = todo.filter((_, i) => i !== index);
+          setTodo(newTodos);
+        },
+      },
+    ]);
   };
 
-  const editTodo = (index: number) => {
-    console.log(updateInput, index);
-    todo.splice(index, 1, updateInput);
-    setTodo([...todo]);
-    setModalVisible(false);
+  const editTodo = () => {
+    if (index !== null && updateInput.trim()) {
+      const updatedTodos = todo.map((item, i) =>
+        i === index ? updateInput : item
+      );
+      setTodo(updatedTodos);
+      setModalVisible(false);
+      setUpdateInput("");
+    } else {
+      Alert.alert("Please enter a valid update.");
+    }
   };
+
   return (
     <SafeAreaView style={styles.container}>
-      <Text
-        style={{
-          fontSize: 20,
-          textAlign: "center",
-          marginVertical: 10,
-        }}
-      >
-        Todo App
-      </Text>
+      <Text style={styles.header}>Todo App</Text>
       <TextInput
         style={styles.input}
         onChangeText={setInput}
         value={input}
-        placeholder="enter todo "
+        placeholder="Enter task"
       />
       <TouchableOpacity style={styles.button} onPress={addTodo}>
-        <Text>Press Here</Text>
+        <Text style={styles.buttonText}>Add Todo</Text>
       </TouchableOpacity>
 
       {todo.length > 0 ? (
         <FlatList
-          style={{ marginTop: 20 }}
+          style={styles.list}
           data={todo}
-          renderItem={({ item, index }) => {
-            return (
-              <View style={styles.item}>
-                <Text style={styles.title}>{item}</Text>
+          renderItem={({ item, index }) => (
+            <View style={styles.item}>
+              <Text style={styles.title}>{item}</Text>
+              <View style={styles.buttonGroup}>
                 <TouchableOpacity
-                  style={styles.ListBtn}
-                  onPress={() => deleteTodo(index)}
-                  activeOpacity={0.5}
-                >
-                  <Text>delete</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.ListBtn}
+                  style={styles.editButton}
                   onPress={() => {
                     setIndex(index);
+                    setUpdateInput(item);
                     setModalVisible(true);
                   }}
                 >
-                  <Text>edit</Text>
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => deleteTodo(index)}
+                >
+                  <Text style={styles.buttonText}>Delete</Text>
                 </TouchableOpacity>
               </View>
-            );
-          }}
+            </View>
+          )}
           keyExtractor={(item, index) => index.toString()}
         />
       ) : (
-        <Text style={{ ...styles.title, color: "black", margin: 20 }}>
-          No Todo Found...
-        </Text>
+        <Text style={styles.noTodo}>No Todo Found...</Text>
       )}
 
-      <View style={styles.centeredView}>
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            Alert.alert("Modal has been closed.");
-            setModalVisible(!modalVisible);
-          }}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Update Todo!</Text>
-              <TextInput
-                style={styles.updateInput}
-                onChangeText={setUpdateInput}
-                value={updateInput}
-              />
-              <Pressable
-                style={[styles.modalBtn, styles.buttonClose]}
-                onPress={() => editTodo(index)}
-              >
-                <Text style={styles.textStyle}>Update Todo</Text>
-              </Pressable>
-            </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(!modalVisible)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Update Todo!</Text>
+            <TextInput
+              style={styles.updateInput}
+              onChangeText={setUpdateInput}
+              value={updateInput}
+              placeholder="Update todo"
+            />
+            <Pressable style={styles.updateButton} onPress={editTodo}>
+              <Text style={styles.buttonText}>Update Todo</Text>
+            </Pressable>
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </Pressable>
           </View>
-        </Modal>
-        {/* <Pressable
-        style={[styles.button, styles.buttonOpen]}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.textStyle}>Show Modal</Text>
-      </Pressable> */}
-      </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -136,51 +134,86 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#FF5A37",
+    padding: 20,
+    color: "white",
+  },
+  header: {
+    fontSize: 28,
+    textAlign: "center",
+    marginVertical: 20,
+    color: "white",
+    fontWeight: "900",
   },
   input: {
-    height: 40,
-    marginHorizontal: 40,
-    marginVertical: 20,
+    height: 50,
+    borderColor: "#ccc",
     borderWidth: 1,
+    borderRadius: 10,
     padding: 10,
-  },
-  updateInput: {
-    margin: 20,
-    width: 200,
-    borderWidth: 1,
+    marginBottom: 20,
+    backgroundColor: "#fff",
   },
   button: {
-    alignItems: "center",
-    backgroundColor: "#DDDDDD",
-    padding: 10,
-    marginHorizontal: 120,
+    backgroundColor: "blue",
+    borderRadius: 10,
+    paddingVertical: 15,
+    marginBottom: 20,
   },
-  item: {
-    backgroundColor: "#000000",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  title: {
-    fontSize: 32,
+  buttonText: {
     color: "white",
     textAlign: "center",
+    fontWeight: "900",
+    fontSize: 20,
   },
-  ListBtn: {
-    alignItems: "center",
-    backgroundColor: "#DDDDDD",
+  list: {
+    marginTop: 10,
+  },
+  item: {
+    backgroundColor: "maroon",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 8,
+    flexDirection: "column",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "white",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  editButton: {
+    backgroundColor: "#FF9800",
+    borderRadius: 10,
     padding: 10,
-    margin: 5,
+    flex: 1,
+    marginRight: 5,
+  },
+  deleteButton: {
+    backgroundColor: "#F44336",
+    borderRadius: 10,
+    padding: 10,
+    flex: 1,
+  },
+  noTodo: {
+    fontSize: 25,
+    color: "white",
+    textAlign: "center",
+    margin: 20,
   },
   centeredView: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22,
   },
   modalView: {
     margin: 20,
-    backgroundColor: "white",
+    backgroundColor: "green",
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -193,25 +226,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalBtn: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-  },
-  buttonOpen: {
-    backgroundColor: "#F194FF",
-  },
-  buttonClose: {
-    backgroundColor: "#2196F3",
-  },
-  textStyle: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
   modalText: {
     marginBottom: 15,
     textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+  },
+  updateInput: {
+    height: 50,
+    borderColor: "black",
+    color: "black",
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+    width: 200,
+  },
+  updateButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 10,
+    paddingVertical: 10,
+    marginBottom: 10,
+    width: 150,
+  },
+  cancelButton: {
+    backgroundColor: "#FF9800",
+    borderRadius: 10,
+    paddingVertical: 10,
+    width: 150,
   },
 });
 
